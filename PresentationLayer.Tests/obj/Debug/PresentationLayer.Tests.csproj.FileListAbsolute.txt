@@ -1,0 +1,2 @@
+C:\Users\Qweetyk\Documents\Visual Studio 2017\source\repos\Foto_Album\PresentationLayer.Tests\obj\Debug\PresentationLayer.Tests.csprojAssemblyReference.cache
+C:\Users\Qweetyk\Documents\Visual Studio 2017\source\repos\Foto_Album\PresentationLayer.Tests\obj\Debug\PresentationLayer.Tests.csproj.CoreCompileInputs.cache

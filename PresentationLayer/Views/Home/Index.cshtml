@@ -1,0 +1,194 @@
+﻿<div>
+    <label>Введите Email</label><br />
+    <input type="text" id="login" /> <br /><br />
+    <label>Введите пароль</label><br />
+    <input type="password" id="password" /><br /><br />
+    <label>Подтвердите пароль</label><br />
+    <input type="password" id="confirmpassword" /><br /><br />
+    <input type="submit" id="submit" value="Регистрация" />
+</div>
+<div id="tableBlock" style="View"></div>
+<div id="editBlock">
+    <p><b>Редактирование фото</b></p>
+    <table>
+        <tr><td><input type="hidden" id="editId" /></td><td></td></tr>
+        <tr><td><label>Название: </label></td><td><input type="text" id="editName" /></td></tr>
+        <tr><td><label>Ссылка: </label></td><td><input type="text" id="editLink" /></td></tr>
+    </table>
+    <button id="editFoto">Сохранить</button>
+</div>
+<div id="createBlock">
+    <p><b>Добавление фото</b></p>
+    <table>
+        <tr><td><label>Название: </label></td><td><input type="text" id="addName" /></td></tr>
+        <tr><td><label>Ссылка: </label></td><td><input type="text" id="addLink" /></td></tr>
+    </table>
+    <button id="addFoto">Сохранить</button>
+</div>
+
+@section scripts
+{
+    <script type="text/javascript">
+    $(document).ready(function () {
+        GetAllFotos();
+
+        $("#editFoto").click(function (event) {
+            event.preventDefault();
+            EditFoto();
+        });
+
+        $("#addFoto").click(function (event) {
+            event.preventDefault();
+            AddFoto();
+        });
+    });
+    $(function () {
+        $('#submit').click(function (e) {
+            e.preventDefault();
+            var data = {
+                Email: $('#login').val(),
+                Password: $('#password').val(),
+                ConfirmPassword: $('#confirmpassword').val()
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: '/api/Account/Register',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(data)
+            }).success(function (data) {
+                alert("Регистрация пройдена");
+            }).fail(function (data) {
+                alert("В процесе регистрации возникла ошибка");
+            });
+        });
+    })
+    // Получение всех фото по ajax-запросу
+    function GetAllFotos() {
+        $("#createBlock").css('display', 'block');
+        $("#editBlock").css('display', 'none');
+        $.ajax({
+            url: '/api/values',
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                WriteResponse(data);
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+    // вывод полученных данных на экран
+    function WriteResponse(fotos) {
+        var strResult = "<table><th>ID</th><th>Название</th><th>Фотография</th>";
+        $.each(fotos, function (index, fotoDTO) {
+            strResult +=
+                "<tr>" +
+                "<td>" + fotoDTO.Id + "</td>" +
+                "<td> " + fotoDTO.Name + "</td>" +
+                "<td> <img src='/../Content/img/" + fotoDTO.Link + "' alt='" + fotoDTO.Id + "' width='320'/> </td>" +
+                "<td><a id='editItem' data-item='" + fotoDTO.Id + "' onclick='EditItem(this);' >Редактировать</a></td>" +
+                "<td><a id='delItem' data-item='" + fotoDTO.Id + "' onclick='DeleteItem(this);' >Удалить</a></td>" +
+                "</tr>";
+        });
+        strResult += "</table>";
+        $("#tableBlock").html(strResult);
+    }
+    // обработчик удаления
+    function DeleteItem(el) {
+        // получаем id удаляемого объекта
+        var id = $(el).attr('data-item');
+        DeleteFoto(id);
+    }
+    // Удаление фото
+    function DeleteFoto(id) {
+        $.ajax({
+            url: '/api/values/' + id,
+            type: 'DELETE',
+            contentType: "application/json;charset=utf-8",
+            success: function (data) {
+                GetAllBooks();
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+    // обработчик редактирования
+    function EditItem (el) {
+        // получаем id редактируемого объекта
+        var id = $(el).attr('data-item');
+        GetFoto(id);
+    }
+    // запрос фото на редактирование
+    function GetFoto(id) {
+        $.ajax({
+            url: '/api/values/' + id,
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                ShowFoto(data);
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+    // вывод данных редактируемой фото в поля для редактирования
+    function ShowFoto(foto) {
+        if (foto != null) {
+            $("#createBlock").css('display', 'none');
+            $("#editBlock").css('display', 'block');
+            $("#editId").val(foto.Id);
+            $("#editName").val(foto.Name);
+            $("#editLink").val(foto.Link);
+        }
+        else {
+            alert("Такая фотоа не существует");
+        }
+    }
+    // Добавление новой фото
+    function AddFoto() {
+        // получаем значения для добавляемой фото
+        var foto = {
+            Name: $('#addName').val(),
+            Link: $('#addLink').val()
+        };
+        $.ajax({
+            url: '/api/values/',
+            type: 'POST',
+            data: JSON.stringify(foto),
+            contentType: "application/json;charset=utf-8",
+            success: function (data) {
+                GetAllFotos();
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+    // редактирование фото
+    function EditFoto() {
+        var id = $('#editId').val()
+        // получаем новые значения для редактируемой фото
+        var foto = {
+            Id: $('#editId').val(),
+            Name: $('#editName').val(),
+            Link: $('#editLink').val()
+        };
+        $.ajax({
+            url: '/api/values/' + id,
+            type: 'PUT',
+            data: JSON.stringify(foto),
+            contentType: "application/json;charset=utf-8",
+            success: function (data) {
+                GetAllBooks();
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+    </script>
+}
